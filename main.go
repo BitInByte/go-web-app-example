@@ -6,9 +6,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Runs before main
+// Perfect for initializations
 func init() {
     core.LoadEnvVariables()
     core.LoadDBSettings()
+    core.Migrations()
 }
 
 func main()  {
