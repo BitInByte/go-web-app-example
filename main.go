@@ -8,6 +8,7 @@ import (
 
 func init() {
     core.LoadEnvVariables()
+    core.LoadDBSettings()
 }
 
 func main()  {
