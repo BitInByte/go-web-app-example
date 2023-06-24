@@ -41,7 +41,8 @@ func AuthGuard(ctx *gin.Context) {
 		}
 		// Find user with token sub
 		var user model.User
-		result := core.DB.First(&user, "email = ?", claims["sub"])
+		result := core.DB.First(&user, "username = ?", claims["sub"])
+		fmt.Println(result.RowsAffected, result.Error)
 		if result.RowsAffected == 0 || result.Error != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 		}
