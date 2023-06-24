@@ -12,44 +12,44 @@ import (
 type DependencyInjectionContainer struct {
 	DB *gorm.DB
 
-	AuthRouter router.AuthRouter
-	TodoRouter router.TodoRouter
+	AuthRouter *router.AuthRouter
+	TodoRouter *router.TodoRouter
 
-	AuthController controller.AuthController
-	TodoController controller.TodoController
+	AuthController *controller.AuthController
+	TodoController *controller.TodoController
 
-	AuthMiddleware middleware.AuthMiddleware
+	AuthMiddleware *middleware.AuthMiddleware
 }
 
-// func (d DependencyInjectionContainer) LoadDependencyInjectionContainer() {
-// 	d.DB = LoadSqliteDBSettings()
-// }
-
 func NewDependencyInjectionContainer() *DependencyInjectionContainer {
-	dic := DependencyInjectionContainer{
+	dic := &DependencyInjectionContainer{
 		DB: LoadSqliteDBSettings(),
 	}
-	// newDependencyInjectionContainer.LoadDependencyInjectionContainer()
-	db := LoadSqliteDBSettings()
 
-	// Routers
-	// {
-	dic.AuthRouter = router.AuthRouter{DB: dic.DB, AuthController: dic.AuthController, AuthMiddleware: dic.AuthMiddleware}
-	dic.TodoRouter = router.TodoRouter{TodoController: dic.TodoController}
-	// }
+	// Order here matters. We should always start instantiate the
+	// last dependencies that are needed and the first dependencies
+	// needed to the end
+	// Instantiate
+	// controllers -> middleware -> router
+	// Execution
+	// router -> middleware -> controllers
 
 	// Controllers
-	// {
-	dic.AuthController = controller.AuthController{DB: dic.DB}
-	dic.TodoController = controller.TodoController{DB: db}
-	// }
+	{
+		dic.AuthController = &controller.AuthController{DB: dic.DB}
+		dic.TodoController = &controller.TodoController{DB: dic.DB}
+	}
 
 	// Middleware
-	// {
-	dic.AuthMiddleware = middleware.AuthMiddleware{DB: db}
-	// }
+	{
+		dic.AuthMiddleware = &middleware.AuthMiddleware{DB: dic.DB}
+	}
 
-	// dic.DB = db
-	// fmt.Println(DB)
-	return &dic
+	// Routers
+	{
+		dic.AuthRouter = &router.AuthRouter{AuthController: dic.AuthController, AuthMiddleware: dic.AuthMiddleware}
+		dic.TodoRouter = &router.TodoRouter{TodoController: dic.TodoController}
+	}
+
+	return dic
 }

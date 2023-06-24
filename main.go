@@ -27,24 +27,16 @@ func main() {
 	v1 := r.Group("/v1")
 	fmt.Println("DIC MAIN", di)
 
-	// {
-	app := v1.Group("/")
-	router.AppRouter(app)
+	{
+		app := v1.Group("/")
+		router.AppRouter(app)
 
-	auth := v1.Group("/auth")
-	di.AuthRouter.Init(auth)
-	// router.AuthRouter(auth)
-	// router.AuthRouter{
-	// 	DB: di.DB,
-	// }.Init(auth)
+		auth := v1.Group("/auth")
+		di.AuthRouter.Init(auth)
 
-	todo := v1.Group("/todo")
-	di.TodoRouter.Init(todo)
-	// router.TodoRouter{
-	// 	DB: di.DB,
-	// }.Init(todo)
-
-	// }
+		todo := v1.Group("/todo", di.AuthMiddleware.AuthGuard)
+		di.TodoRouter.Init(todo)
+	}
 
 	r.Run()
 }
