@@ -6,13 +6,18 @@ import (
 	"os"
 	"time"
 
-	"github.com/BitInByte/web-app-example/core"
+	// "github.com/BitInByte/web-app-example/core"
 	"github.com/BitInByte/web-app-example/model"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"gorm.io/gorm"
 )
 
-func AuthGuard(ctx *gin.Context) {
+type AuthMiddleware struct {
+	DB *gorm.DB
+}
+
+func (a AuthMiddleware) AuthGuard(ctx *gin.Context) {
 	// Get session cookie
 	tokenString, err := ctx.Cookie("Session")
 	if err != nil {
@@ -41,7 +46,8 @@ func AuthGuard(ctx *gin.Context) {
 		}
 		// Find user with token sub
 		var user model.User
-		result := core.DB.First(&user, "username = ?", claims["sub"])
+		// result := core.DB.First(&user, "username = ?", claims["sub"])
+		result := a.DB.First(&user, "username = ?", claims["sub"])
 		fmt.Println(result.RowsAffected, result.Error)
 		if result.RowsAffected == 0 || result.Error != nil {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
