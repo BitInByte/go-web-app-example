@@ -9,7 +9,7 @@ import (
 
 var DB *gorm.DB
 
-func LoadDBSettings() {
+func LoadSqliteDBSettings() {
     dbName := os.Getenv("DB_NAME")
     if dbName == "" {
         dbName = "file::memory:?cache=shared"

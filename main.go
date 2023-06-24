@@ -10,7 +10,7 @@ import (
 // Perfect for initializations
 func init() {
     core.LoadEnvVariables()
-    core.LoadDBSettings()
+    core.LoadSqliteDBSettings()
     core.Migrations()
 }
 
