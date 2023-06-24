@@ -6,11 +6,12 @@ import (
 	"os"
 	"time"
 
-	"github.com/BitInByte/web-app-example/core"
+	// "github.com/BitInByte/web-app-example/core"
 	"github.com/BitInByte/web-app-example/model"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type SignupBodyDTO struct {
@@ -24,7 +25,11 @@ type LoginBodyDTO struct {
 	Password string `json:"password,omitempty" binding:"required"`
 }
 
-func AuthSignup(ctx *gin.Context) {
+type AuthController struct {
+	DB *gorm.DB
+}
+
+func (a AuthController) AuthSignup(ctx *gin.Context) {
 	var signupBody SignupBodyDTO
 
 	// if ctx.BindJSON(&signupBody) != nil {
@@ -49,7 +54,8 @@ func AuthSignup(ctx *gin.Context) {
 
 	// Create the use on database
 	user := model.User{Username: signupBody.Email, Email: signupBody.Email, Password: string(hashedPassword)}
-	result := core.DB.Create(&user) // pass pointer of data to Create
+	// result := core.DB.Create(&user) // pass pointer of data to Create
+	result := a.DB.Create(&user) // pass pointer of data to Create
 	if result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "Something went wrong storing the user on database!",
@@ -69,7 +75,8 @@ func AuthSignup(ctx *gin.Context) {
 
 }
 
-func AuthLogin(ctx *gin.Context) {
+func (a AuthController) AuthLogin(ctx *gin.Context) {
+	fmt.Println("Auth Controller", a.DB == nil)
 	var loginBody LoginBodyDTO
 
 	// Fetch body data and validate
@@ -82,7 +89,9 @@ func AuthLogin(ctx *gin.Context) {
 
 	var user model.User
 	// Populates data to the user struct
-	result := core.DB.First(&user, "email = ?", loginBody.Email)
+	// result := core.DB.First(&user, "email = ?", loginBody.Email)
+	fmt.Println(a.DB == nil)
+	result := a.DB.First(&user, "email = ?", loginBody.Email)
 	// SELECT * FROM users WHERE email = {Email};
 	fmt.Println(result.RowsAffected, result.Error)
 	if result.RowsAffected == 0 || result.Error != nil {
@@ -131,7 +140,7 @@ func AuthLogin(ctx *gin.Context) {
 	})
 }
 
-func Validate(ctx *gin.Context) {
+func (a AuthController) Validate(ctx *gin.Context) {
 	user, _ := ctx.Get("user")
 	// Send response
 	ctx.JSON(http.StatusCreated, gin.H{
