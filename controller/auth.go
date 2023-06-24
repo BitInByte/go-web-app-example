@@ -3,10 +3,13 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/BitInByte/web-app-example/core"
 	"github.com/BitInByte/web-app-example/model"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -98,8 +101,41 @@ func AuthLogin(ctx *gin.Context) {
 
 	}
 
+	// Build jwt
+	// Create a new token object, specifying signing method and the claims
+	// you would like it to contain.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": user.Username,
+		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+	})
+
+	// Sign and get the complete encoded token as a string using the secret
+	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
+
+	fmt.Println(tokenString, err)
+
+	if err != nil {
+		ctx.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Failed to generate jwt token! Please try again.",
+		})
+		return
+	}
+
+	ctx.SetSameSite(http.SameSiteLaxMode)
+	ctx.SetCookie("Session", tokenString, 3600*24*7, "", "", false, true)
+
+	// Send response
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Login successfuly",
+		"data":    tokenString,
+	})
+}
+
+func Validate(ctx *gin.Context) {
+	user, _ := ctx.Get("user")
 	// Send response
 	ctx.JSON(http.StatusCreated, gin.H{
-		"message": "Login successfuly",
+		"message": "Validated",
+		"data":    user.(model.User).ID,
 	})
 }
