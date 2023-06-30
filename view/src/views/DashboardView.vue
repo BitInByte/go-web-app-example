@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// @ts-ignore
 import { AxiosInstance } from 'axios'
 import { inject, onMounted, ref } from 'vue'
 import { useTodoStore } from '../stores/todo'

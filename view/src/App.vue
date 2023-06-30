@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import { inject, onMounted } from 'vue'
-import type { AxiosInstance } from 'axios'
+// import type { AxiosInstance } from 'axios'
 import { useUserStore } from './stores/user'
 const userStore = useUserStore()
 
