@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -35,13 +34,11 @@ func (a AuthController) AuthSignup(ctx *gin.Context) {
 	// if ctx.BindJSON(&signupBody) != nil {
 	// Fetch body data and validate
 	if ctx.Bind(&signupBody) != nil {
-		fmt.Println(signupBody)
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to parse body. Please forward all data!",
 		})
 		return
 	}
-	// fmt.Println(signupBody)
 
 	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(signupBody.Password), 10)
@@ -76,7 +73,6 @@ func (a AuthController) AuthSignup(ctx *gin.Context) {
 }
 
 func (a AuthController) AuthLogin(ctx *gin.Context) {
-	fmt.Println("Auth Controller", a.DB == nil)
 	var loginBody LoginBodyDTO
 
 	// Fetch body data and validate
@@ -90,10 +86,8 @@ func (a AuthController) AuthLogin(ctx *gin.Context) {
 	var user model.User
 	// Populates data to the user struct
 	// result := core.DB.First(&user, "email = ?", loginBody.Email)
-	fmt.Println(a.DB == nil)
 	result := a.DB.First(&user, "email = ?", loginBody.Email)
 	// SELECT * FROM users WHERE email = {Email};
-	fmt.Println(result.RowsAffected, result.Error)
 	if result.RowsAffected == 0 || result.Error != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to fetch user from database! Email might be invalid.",
@@ -110,18 +104,19 @@ func (a AuthController) AuthLogin(ctx *gin.Context) {
 
 	}
 
+	expirationDate := time.Now().Add(time.Hour * 24 * 7).Unix()
+	// expirationDate := time.Now().Add(time.Minute * 5).Unix()
+
 	// Build jwt
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"sub": user.Username,
-		"exp": time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"exp": expirationDate,
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
 	tokenString, err := token.SignedString([]byte(os.Getenv("SECRET")))
-
-	fmt.Println(tokenString, err)
 
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{
@@ -136,7 +131,10 @@ func (a AuthController) AuthLogin(ctx *gin.Context) {
 	// Send response
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Login successfuly",
-		"data":    tokenString,
+		"data": map[string]interface{}{
+			"token":          tokenString,
+			"expirationDate": expirationDate,
+		},
 	})
 }
 
