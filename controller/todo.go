@@ -1,6 +1,7 @@
 package controller
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/BitInByte/web-app-example/model"
@@ -13,8 +14,8 @@ type TodoController struct {
 }
 
 type createTodoBodyDTO struct {
-	Title string `json:"title" binding:"required"`
-	Body  string `json:"body" binding:"required"`
+	// Title string `json:"title" binding:"required"`
+	Body string `json:"body" binding:"required"`
 }
 
 func (t TodoController) CreateTodo(ctx *gin.Context) {
@@ -41,7 +42,7 @@ func (t TodoController) CreateTodo(ctx *gin.Context) {
 	userId := user.(model.User).ID
 	// Store todo
 	todo := model.Todo{
-		Title:  createTodoBody.Title,
+		// Title:  createTodoBody.Title,
 		Body:   createTodoBody.Body,
 		UserID: userId,
 		Status: model.Created,
@@ -89,4 +90,87 @@ func (t TodoController) GetAllTodos(ctx *gin.Context) {
 		"data":    foundUser.Todos,
 	})
 
+}
+
+func (t TodoController) GetAllStatus(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Status retrieved with success",
+		"data": []string{
+			"done",
+			"in progress",
+			"created",
+		},
+	})
+}
+
+type StatusUriDTO struct {
+	ID string `uri:"id" binding:"required"`
+}
+
+// type StatusBodyDTO struct {
+// 	Status string `uri:"status" binding:"required"`
+// }
+
+func (t TodoController) ChangeStatus(ctx *gin.Context) {
+	var statusUriDTO StatusUriDTO
+	if ctx.BindUri(&statusUriDTO) != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Missing id from the URL",
+		})
+		return
+	}
+	// or
+	// fmt.Println(ctx.Param("id"))
+
+	// var statusBodyDTO StatusBodyDTO
+	// if ctx.Bind(&statusBodyDTO) != nil {
+	// 	ctx.JSON(http.StatusBadRequest, gin.H{
+	// 		"error": "Missing the current status from the body",
+	// 	})
+	// 	return
+	// }
+
+	fmt.Println(statusUriDTO)
+
+	// Get todo from id
+	var todo model.Todo
+	t.DB.First(&todo, statusUriDTO.ID)
+
+	switch todo.Status {
+	case "created":
+		todo.Status = "in progress"
+	case "in progress":
+		todo.Status = "done"
+	}
+
+	t.DB.Save(&todo)
+
+	// Could also be done like this:
+	// t.DB.Model(&todo).Updates(model.Todo{
+	//     Body: todo.Body,
+	//     Status: "status here",
+	// })
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Status retrieved with success",
+		"data":    todo,
+	})
+}
+
+func (t TodoController) DeleteTodo(ctx *gin.Context) {
+	var deleteUriDTO StatusUriDTO
+	if ctx.BindUri(&deleteUriDTO) != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": "Missing id from the URL",
+		})
+		return
+	}
+
+	fmt.Println(deleteUriDTO.ID)
+	t.DB.Delete(&model.Todo{}, &deleteUriDTO.ID)
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Successfuly deleted",
+		"data":    deleteUriDTO.ID,
+	})
 }
